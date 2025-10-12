@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/hiamthach108/simplerank/internal/apperr"
 	"github.com/hiamthach108/simplerank/internal/dto"
 	"github.com/hiamthach108/simplerank/internal/service"
 	"github.com/hiamthach108/simplerank/pkg/logger"
@@ -29,9 +30,9 @@ func (h *LeaderboardHandler) GetLeaderboard(c echo.Context) error {
 	scores, err := h.leaderboardSvc.GetTopEntries(c.Request().Context(), leaderboardID, 100)
 	if err != nil {
 		h.logger.Error("Failed to get leaderboard", "error", err)
-		return c.JSON(500, map[string]string{"error": "Internal Server Error"})
+		return HandleError(c, apperr.ErrLeaderboardNotFound, nil)
 	}
-	return c.JSON(200, scores)
+	return HandleSuccess(c, scores)
 }
 
 func (h *LeaderboardHandler) SubmitScore(c echo.Context) error {
@@ -39,11 +40,11 @@ func (h *LeaderboardHandler) SubmitScore(c echo.Context) error {
 	var req dto.UpdateEntryScore
 	if err := c.Bind(&req); err != nil {
 		h.logger.Error("Failed to bind request", "error", err)
-		return c.JSON(400, map[string]string{"error": "Bad Request"})
+		return HandleError(c, apperr.ErrBadRequest, err)
 	}
 	if err := h.leaderboardSvc.UpdateEntryScore(c.Request().Context(), leaderboardID, req.EntryId, req.Score); err != nil {
 		h.logger.Error("Failed to submit score", "error", err)
-		return c.JSON(500, map[string]string{"error": "Internal Server Error"})
+		return HandleError(c, apperr.ErrInternal, err)
 	}
-	return c.JSON(200, map[string]string{"status": "success"})
+	return HandleSuccess(c, "Score submitted successfully")
 }
