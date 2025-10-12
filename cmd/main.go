@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/hiamthach108/simplerank/config"
+	"github.com/hiamthach108/simplerank/internal/service"
 	"github.com/hiamthach108/simplerank/pkg/cache"
 	"github.com/hiamthach108/simplerank/pkg/logger"
 	"github.com/hiamthach108/simplerank/presentation/http"
@@ -15,6 +16,7 @@ func main() {
 			logger.NewLogger,
 			cache.NewAppCache,
 			http.NewHttpServer,
+			service.NewLeaderBoardSvc,
 		),
 		fx.Invoke(http.RegisterHooks),
 	)

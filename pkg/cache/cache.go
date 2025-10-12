@@ -23,6 +23,16 @@ func NewAppCache(config *config.AppConfig, logger logger.ILogger) (ICache, error
 		DB:       config.Cache.RedisDB,
 	})
 
+	// Test connection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		logger.Error("Failed to connect to Redis", "error", err)
+		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
+	}
+
+	logger.Info("Connected to Redis successfully")
+
 	return &appCache{
 		serviceName: config.App.Name,
 		logger:      logger,

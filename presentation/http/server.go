@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/hiamthach108/simplerank/config"
+	"github.com/hiamthach108/simplerank/internal/service"
 	"github.com/hiamthach108/simplerank/pkg/logger"
+	"github.com/hiamthach108/simplerank/presentation/http/handler"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/fx"
@@ -18,7 +20,11 @@ type HttpServer struct {
 	echo   *echo.Echo
 }
 
-func NewHttpServer(config *config.AppConfig, logger logger.ILogger) *HttpServer {
+func NewHttpServer(
+	config *config.AppConfig,
+	logger logger.ILogger,
+	leaderboardSvc service.ILeaderboardSvc,
+) *HttpServer {
 	e := echo.New()
 	e.HideBanner = true
 	// Use middleware with your logger
@@ -63,6 +69,12 @@ func NewHttpServer(config *config.AppConfig, logger logger.ILogger) *HttpServer 
 	e.GET("/ping", func(c echo.Context) error {
 		return c.String(http.StatusOK, "pong")
 	})
+
+	v1 := e.Group("/api/v1")
+
+	// Register leaderboard routes
+	leaderboardHandler := handler.NewLeaderboardHandler(leaderboardSvc, logger)
+	leaderboardHandler.RegisterRoutes(v1)
 
 	return &HttpServer{
 		config: *config,
