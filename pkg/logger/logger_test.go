@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/hiamthach108/simplerank/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -97,46 +98,91 @@ func TestSanitize(t *testing.T) {
 func TestNewLogger(t *testing.T) {
 	tests := []struct {
 		name    string
-		config  Config
+		config  *config.AppConfig
 		wantErr bool
 	}{
 		{
 			name: "valid debug config",
-			config: Config{
-				Service: "test-service",
-				Level:   DebugLv,
+			config: &config.AppConfig{
+				App: struct {
+					Name    string `env:"APP_NAME"`
+					Version string `env:"APP_VERSION"`
+				}{
+					Name: "test-service",
+				},
+				Logger: struct {
+					Level string `env:"LOG_LEVEL"`
+				}{
+					Level: string(DebugLv),
+				},
 			},
 			wantErr: false,
 		},
 		{
 			name: "valid info config",
-			config: Config{
-				Service: "test-service",
-				Level:   InfoLv,
+			config: &config.AppConfig{
+				App: struct {
+					Name    string `env:"APP_NAME"`
+					Version string `env:"APP_VERSION"`
+				}{
+					Name: "test-service",
+				},
+				Logger: struct {
+					Level string `env:"LOG_LEVEL"`
+				}{
+					Level: string(InfoLv),
+				},
 			},
 			wantErr: false,
 		},
 		{
 			name: "valid warn config",
-			config: Config{
-				Service: "test-service",
-				Level:   WarnLv,
+			config: &config.AppConfig{
+				App: struct {
+					Name    string `env:"APP_NAME"`
+					Version string `env:"APP_VERSION"`
+				}{
+					Name: "test-service",
+				},
+				Logger: struct {
+					Level string `env:"LOG_LEVEL"`
+				}{
+					Level: string(WarnLv),
+				},
 			},
 			wantErr: false,
 		},
 		{
 			name: "valid error config",
-			config: Config{
-				Service: "test-service",
-				Level:   ErrorLv,
+			config: &config.AppConfig{
+				App: struct {
+					Name    string `env:"APP_NAME"`
+					Version string `env:"APP_VERSION"`
+				}{
+					Name: "test-service",
+				},
+				Logger: struct {
+					Level string `env:"LOG_LEVEL"`
+				}{
+					Level: string(ErrorLv),
+				},
 			},
 			wantErr: false,
 		},
 		{
 			name: "invalid level defaults to info",
-			config: Config{
-				Service: "test-service",
-				Level:   "invalid",
+			config: &config.AppConfig{
+				App: struct {
+					Name    string `env:"APP_NAME"`
+					Version string `env:"APP_VERSION"`
+				}{
+					Name: "test-service",
+				},
+				Logger: struct {
+					Level string `env:"LOG_LEVEL"`
+				}{
+					Level: "invalid",
+				},
 			},
 			wantErr: false,
 		},
@@ -152,8 +198,15 @@ func TestNewLogger(t *testing.T) {
 			if !tt.wantErr && logger == nil {
 				t.Error("NewLogger() returned nil logger")
 			}
-			if !tt.wantErr && logger.service != tt.config.Service {
-				t.Errorf("NewLogger() service = %v, want %v", logger.service, tt.config.Service)
+			if !tt.wantErr {
+				// Cast to concrete type to access service field
+				if zapLogger, ok := logger.(*zapLogger); ok {
+					if zapLogger.service != tt.config.App.Name {
+						t.Errorf("NewLogger() service = %v, want %v", zapLogger.service, tt.config.App.Name)
+					}
+				} else {
+					t.Error("NewLogger() should return a *zapLogger")
+				}
 			}
 		})
 	}
@@ -356,5 +409,81 @@ func TestLoggerWith(t *testing.T) {
 	// Test that the new logger has the correct type
 	if _, ok := contextLogger.(*zapLogger); !ok {
 		t.Error("With() should return a *zapLogger")
+	}
+}
+
+func TestNewLoggerWithConfigLevel(t *testing.T) {
+	// Test that the logger correctly uses the Logger.Level from config
+	testConfig := &config.AppConfig{
+		App: struct {
+			Name    string `env:"APP_NAME"`
+			Version string `env:"APP_VERSION"`
+		}{
+			Name: "test-app",
+		},
+		Logger: struct {
+			Level string `env:"LOG_LEVEL"`
+		}{
+			Level: string(DebugLv),
+		},
+	}
+
+	logger, err := NewLogger(testConfig)
+	if err != nil {
+		t.Fatalf("Failed to create logger: %v", err)
+	}
+
+	if zapLogger, ok := logger.(*zapLogger); ok {
+		if zapLogger.service != "test-app" {
+			t.Errorf("Expected service name 'test-app', got '%s'", zapLogger.service)
+		}
+	} else {
+		t.Error("Expected logger to be *zapLogger")
+	}
+
+	// Test with empty level (should default to info)
+	testConfig.Logger.Level = ""
+	logger2, err := NewLogger(testConfig)
+	if err != nil {
+		t.Fatalf("Failed to create logger with empty level: %v", err)
+	}
+
+	if zapLogger2, ok := logger2.(*zapLogger); ok {
+		if zapLogger2.service != "test-app" {
+			t.Errorf("Expected service name 'test-app', got '%s'", zapLogger2.service)
+		}
+	} else {
+		t.Error("Expected logger2 to be *zapLogger")
+	}
+}
+
+func TestGetZapLogger(t *testing.T) {
+	testConfig := &config.AppConfig{
+		App: struct {
+			Name    string `env:"APP_NAME"`
+			Version string `env:"APP_VERSION"`
+		}{
+			Name: "test-app",
+		},
+		Logger: struct {
+			Level string `env:"LOG_LEVEL"`
+		}{
+			Level: string(InfoLv),
+		},
+	}
+
+	logger, err := NewLogger(testConfig)
+	if err != nil {
+		t.Fatalf("Failed to create logger: %v", err)
+	}
+
+	zapLogger := logger.GetZapLogger()
+	if zapLogger == nil {
+		t.Error("GetZapLogger() returned nil")
+	}
+
+	// Verify it's actually a zap logger
+	if zapLogger.Core() == nil {
+		t.Error("GetZapLogger() returned invalid zap logger")
 	}
 }

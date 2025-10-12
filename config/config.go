@@ -2,6 +2,8 @@ package config
 
 import (
 	"os"
+	"reflect"
+	"strconv"
 
 	"github.com/golobby/dotenv"
 )
@@ -15,6 +17,9 @@ type AppConfig struct {
 		Host string `env:"HTTP_HOST"`
 		Port string `env:"HTTP_PORT"`
 	}
+	Logger struct {
+		Level string `env:"LOG_LEVEL"`
+	}
 
 	Cache struct {
 		DefaultExpireTimeSec int    `env:"CACHE_DEFAULT_EXPIRE_TIME_SEC"`
@@ -26,17 +31,101 @@ type AppConfig struct {
 	}
 }
 
-func NewAppConfig(envDir string) (*AppConfig, error) {
+func NewAppConfig() (*AppConfig, error) {
 	config := &AppConfig{}
-	file, err := os.Open(envDir)
-	if err != nil {
-		return nil, err
+
+	// Try to load from .env file first (optional)
+	file, err := os.Open(".env")
+	if err == nil {
+		defer file.Close()
+		err = dotenv.NewDecoder(file).Decode(config)
+		if err != nil {
+			return config, err
+		}
 	}
 
-	err = dotenv.NewDecoder(file).Decode(config)
+	// Load from environment variables (this will override .env values)
+	err = loadFromEnv(config)
 	if err != nil {
 		return config, err
 	}
 
-	return config, err
+	return config, nil
+}
+
+// loadFromEnv loads configuration from environment variables using reflection
+func loadFromEnv(config *AppConfig) error {
+	v := reflect.ValueOf(config).Elem()
+	t := reflect.TypeOf(config).Elem()
+
+	return processStruct(v, t)
+}
+
+func processStruct(v reflect.Value, t reflect.Type) error {
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := t.Field(i)
+
+		if field.Kind() == reflect.Struct {
+			// Recursively process nested structs
+			err := processStruct(field, fieldType.Type)
+			if err != nil {
+				return err
+			}
+		} else {
+			// Process individual fields with env tags
+			envTag := fieldType.Tag.Get("env")
+			if envTag != "" {
+				envValue := os.Getenv(envTag)
+				if envValue != "" {
+					err := setFieldValue(field, envValue)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func setFieldValue(field reflect.Value, value string) error {
+	if !field.CanSet() {
+		return nil
+	}
+
+	switch field.Kind() {
+	case reflect.String:
+		field.SetString(value)
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		intVal, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			// If parsing fails, leave as zero value
+			return nil
+		}
+		field.SetInt(intVal)
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		uintVal, err := strconv.ParseUint(value, 10, 64)
+		if err != nil {
+			// If parsing fails, leave as zero value
+			return nil
+		}
+		field.SetUint(uintVal)
+	case reflect.Float32, reflect.Float64:
+		floatVal, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			// If parsing fails, leave as zero value
+			return nil
+		}
+		field.SetFloat(floatVal)
+	case reflect.Bool:
+		boolVal, err := strconv.ParseBool(value)
+		if err != nil {
+			// If parsing fails, leave as zero value
+			return nil
+		}
+		field.SetBool(boolVal)
+	}
+
+	return nil
 }

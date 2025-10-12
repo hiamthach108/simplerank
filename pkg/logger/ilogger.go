@@ -1,5 +1,7 @@
 package logger
 
+import "go.uber.org/zap"
+
 type Level string
 
 const (
@@ -16,6 +18,7 @@ type ILogger interface {
 	Error(msg string, fields ...any)
 	Fatal(msg string, fields ...any)
 	With(fields ...any) ILogger
+	GetZapLogger() *zap.Logger
 }
 
 type Field struct {

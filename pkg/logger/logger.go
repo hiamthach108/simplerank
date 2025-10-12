@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/hiamthach108/simplerank/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -15,12 +16,7 @@ type zapLogger struct {
 	service string
 }
 
-type Config struct {
-	Service string
-	Level   Level
-}
-
-func NewLogger(config Config) (*zapLogger, error) {
+func NewLogger(config *config.AppConfig) (ILogger, error) {
 	encoderConfig := zapcore.EncoderConfig{
 		TimeKey:        "timestamp",
 		LevelKey:       "level",
@@ -36,24 +32,24 @@ func NewLogger(config Config) (*zapLogger, error) {
 	}
 
 	var level zapcore.Level
-	switch config.Level {
-	case DebugLv:
+	switch config.Logger.Level {
+	case string(DebugLv):
 		level = zapcore.DebugLevel
-	case InfoLv:
+	case string(InfoLv):
 		level = zapcore.InfoLevel
-	case WarnLv:
+	case string(WarnLv):
 		level = zapcore.WarnLevel
-	case ErrorLv:
+	case string(ErrorLv):
 		level = zapcore.ErrorLevel
 	default:
 		level = zapcore.InfoLevel
 	}
 
 	cfg := zap.Config{
-		Encoding:         "console", // Switch to console encoding
+		Encoding:         "console",
 		Level:            zap.NewAtomicLevelAt(level),
-		OutputPaths:      []string{"stdout"}, // Log to console (stdout)
-		ErrorOutputPaths: []string{"stderr"}, // Error logs to stderr
+		OutputPaths:      []string{"stdout"},
+		ErrorOutputPaths: []string{"stderr"},
 		EncoderConfig:    encoderConfig,
 	}
 	zlogger, err := cfg.Build(
@@ -65,7 +61,7 @@ func NewLogger(config Config) (*zapLogger, error) {
 
 	return &zapLogger{
 		logger:  zlogger,
-		service: config.Service,
+		service: config.App.Name,
 	}, nil
 }
 
@@ -187,4 +183,8 @@ func captureStackTrace() zap.Field {
 		stacktrace += fmt.Sprintf("%s:%d %s\n", frame.File, frame.Line, frame.Function)
 	}
 	return zap.String("stacktrace", stacktrace)
+}
+
+func (l *zapLogger) GetZapLogger() *zap.Logger {
+	return l.logger
 }
