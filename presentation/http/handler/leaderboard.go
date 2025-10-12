@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/hiamthach108/simplerank/internal/apperr"
 	"github.com/hiamthach108/simplerank/internal/dto"
+	"github.com/hiamthach108/simplerank/internal/errorx"
 	"github.com/hiamthach108/simplerank/internal/service"
 	"github.com/hiamthach108/simplerank/pkg/logger"
 	"github.com/labstack/echo/v4"
@@ -30,7 +30,7 @@ func (h *LeaderboardHandler) GetLeaderboard(c echo.Context) error {
 	scores, err := h.leaderboardSvc.GetTopEntries(c.Request().Context(), leaderboardID, 100)
 	if err != nil {
 		h.logger.Error("Failed to get leaderboard", "error", err)
-		return HandleError(c, apperr.ErrLeaderboardNotFound, nil)
+		return HandleError(c, errorx.ErrLeaderboardNotFound, nil)
 	}
 	return HandleSuccess(c, scores)
 }
@@ -40,11 +40,11 @@ func (h *LeaderboardHandler) SubmitScore(c echo.Context) error {
 	var req dto.UpdateEntryScore
 	if err := c.Bind(&req); err != nil {
 		h.logger.Error("Failed to bind request", "error", err)
-		return HandleError(c, apperr.ErrBadRequest, err)
+		return HandleError(c, errorx.ErrBadRequest, err)
 	}
 	if err := h.leaderboardSvc.UpdateEntryScore(c.Request().Context(), leaderboardID, req.EntryId, req.Score); err != nil {
 		h.logger.Error("Failed to submit score", "error", err)
-		return HandleError(c, apperr.ErrInternal, err)
+		return HandleError(c, errorx.ErrInternal, err)
 	}
 	return HandleSuccess(c, "Score submitted successfully")
 }

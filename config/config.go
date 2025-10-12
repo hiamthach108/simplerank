@@ -29,6 +29,18 @@ type AppConfig struct {
 		RedisPassword        string `env:"REDIS_PASSWORD"`
 		RedisDB              int    `env:"REDIS_DB"`
 	}
+
+	Postgres struct {
+		ConnectionName string `env:"POSTGRES_CONNECTION_NAME"`
+		Host           string `env:"POSTGRES_HOST"`
+		Port           int    `env:"POSTGRES_PORT"`
+		Username       string `env:"POSTGRES_USERNAME"`
+		Password       string `env:"POSTGRES_PASSWORD"`
+		DBName         string `env:"POSTGRES_DBNAME"`
+		SSL            bool   `env:"POSTGRES_SSL"`
+		MaxIdleConns   int    `env:"POSTGRES_MAX_IDLE_CONNS"`
+		MaxOpenConns   int    `env:"POSTGRES_MAX_OPEN_CONNS"`
+	}
 }
 
 func NewAppConfig() (*AppConfig, error) {

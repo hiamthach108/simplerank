@@ -1,4 +1,4 @@
-package apperr
+package errorx
 
 type AppErrCode int
 

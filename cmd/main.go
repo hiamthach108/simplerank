@@ -4,6 +4,7 @@ import (
 	"github.com/hiamthach108/simplerank/config"
 	"github.com/hiamthach108/simplerank/internal/service"
 	"github.com/hiamthach108/simplerank/pkg/cache"
+	"github.com/hiamthach108/simplerank/pkg/database"
 	"github.com/hiamthach108/simplerank/pkg/logger"
 	"github.com/hiamthach108/simplerank/presentation/http"
 	"go.uber.org/fx"
@@ -15,6 +16,7 @@ func main() {
 			config.NewAppConfig,
 			logger.NewLogger,
 			cache.NewAppCache,
+			database.NewDbClient,
 			http.NewHttpServer,
 			service.NewLeaderBoardSvc,
 		),

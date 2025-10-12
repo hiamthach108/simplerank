@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/hiamthach108/simplerank/internal/apperr"
+	"github.com/hiamthach108/simplerank/internal/errorx"
 	"github.com/labstack/echo/v4"
 )
 
@@ -22,10 +22,10 @@ func HandleSuccess(c echo.Context, data any) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func HandleError(c echo.Context, code apperr.AppErrCode, err error) error {
+func HandleError(c echo.Context, code errorx.AppErrCode, err error) error {
 	resp := BaseResp{
 		Code:    int(code),
-		Message: apperr.GetErrorMessage(int(code)),
+		Message: errorx.GetErrorMessage(int(code)),
 	}
 	if err != nil {
 		resp.Message = err.Error()
