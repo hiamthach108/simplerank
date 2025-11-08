@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/hiamthach108/simplerank/internal/errorx"
@@ -22,17 +23,23 @@ func HandleSuccess(c echo.Context, data any) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func HandleError(c echo.Context, code errorx.AppErrCode, err error) error {
-	resp := BaseResp{
-		Code:    int(code),
-		Message: errorx.GetErrorMessage(int(code)),
-	}
-	if err != nil {
-		resp.Message = err.Error()
-	}
-	if code >= 500 {
-		return c.JSON(http.StatusInternalServerError, resp)
+func HandleError(c echo.Context, err error) error {
+	resp := BaseResp{}
+
+	var appErr *errorx.AppError
+	if errors.As(err, &appErr) {
+		resp.Code = int(appErr.Code)
+		resp.Message = appErr.Message
+
+		status := http.StatusInternalServerError
+		if appErr.Code < 500 {
+			status = int(appErr.Code)
+		}
+		return c.JSON(status, resp)
 	}
 
-	return c.JSON(int(code), resp)
+	// fallback for unexpected errors
+	resp.Code = int(errorx.ErrInternal)
+	resp.Message = errorx.GetErrorMessage(int(errorx.ErrInternal))
+	return c.JSON(http.StatusInternalServerError, resp)
 }

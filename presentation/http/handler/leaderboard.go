@@ -35,7 +35,7 @@ func (h *LeaderboardHandler) HandleGetLeaderboard(c echo.Context) error {
 	leaderboard, err := h.leaderboardSvc.GetLeaderboardDetail(reqCtx, leaderboardID)
 	if err != nil {
 		h.logger.Error("Failed to get leaderboard", "error", err)
-		return HandleError(c, errorx.ErrLeaderboardNotFound, nil)
+		return HandleError(c, err)
 	}
 
 	return HandleSuccess(c, leaderboard)
@@ -49,11 +49,11 @@ func (h *LeaderboardHandler) HandleSubmitScore(c echo.Context) error {
 	var req dto.UpdateEntryScore
 	if err := c.Bind(&req); err != nil {
 		h.logger.Error("Failed to bind request", "error", err)
-		return HandleError(c, errorx.ErrBadRequest, err)
+		return HandleError(c, errorx.Wrap(errorx.ErrBadRequest, err))
 	}
 	if err := h.leaderboardSvc.UpdateEntryScore(reqCtx, leaderboardID, req.EntryID, req.Score); err != nil {
 		h.logger.Error("Failed to submit score", "error", err)
-		return HandleError(c, errorx.ErrInternal, err)
+		return HandleError(c, err)
 	}
 
 	return HandleSuccess(c, "Score submitted successfully")
@@ -65,7 +65,7 @@ func (h *LeaderboardHandler) HandleGetAllLeaderboards(c echo.Context) error {
 	leaderboards, err := h.leaderboardSvc.GetListLeaderboards(reqCtx)
 	if err != nil {
 		h.logger.Error("Failed to get leaderboards", "error", err)
-		return HandleError(c, errorx.ErrInternal, err)
+		return HandleError(c, err)
 	}
 
 	return HandleSuccess(c, leaderboards)
@@ -77,12 +77,12 @@ func (h *LeaderboardHandler) HandleCreateLeaderboard(c echo.Context) error {
 	var req dto.CreateLeaderboardReq
 	if err := c.Bind(&req); err != nil {
 		h.logger.Error("Failed to bind request", "error", err)
-		return HandleError(c, errorx.ErrBadRequest, err)
+		return HandleError(c, errorx.Wrap(errorx.ErrBadRequest, err))
 	}
 	leaderboard, err := h.leaderboardSvc.CreateLeaderboard(reqCtx, req)
 	if err != nil {
 		h.logger.Error("Failed to create leaderboard", "error", err)
-		return HandleError(c, errorx.ErrInternal, err)
+		return HandleError(c, err)
 	}
 
 	return HandleSuccess(c, leaderboard)
@@ -94,11 +94,11 @@ func (h *LeaderboardHandler) HandleUpdateLeaderboard(c echo.Context) error {
 	var req dto.UpdateLeaderboardReq
 	if err := c.Bind(&req); err != nil {
 		h.logger.Error("Failed to bind request", "error", err)
-		return HandleError(c, errorx.ErrBadRequest, err)
+		return HandleError(c, errorx.Wrap(errorx.ErrBadRequest, err))
 	}
 	if err := h.leaderboardSvc.UpdateLeaderboard(reqCtx, req.ID, req); err != nil {
 		h.logger.Error("Failed to update leaderboard", "error", err)
-		return HandleError(c, errorx.ErrInternal, err)
+		return HandleError(c, err)
 	}
 
 	return HandleSuccess(c, "Leaderboard updated successfully")

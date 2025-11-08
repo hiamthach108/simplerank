@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hiamthach108/simplerank/internal/dto"
+	"github.com/hiamthach108/simplerank/internal/errorx"
 	"github.com/hiamthach108/simplerank/internal/model"
 	"github.com/hiamthach108/simplerank/internal/repository"
 	"github.com/hiamthach108/simplerank/pkg/cache"
@@ -39,13 +39,13 @@ func (s *LeaderBoardSvc) UpdateEntryScore(ctx context.Context, leaderboardID str
 	leaderboard := s.leaderboardRepo.FindOneById(ctx, leaderboardID)
 	if leaderboard == nil {
 		s.logger.Error("[LeaderboardSvc] leaderboard not found", "id", leaderboardID)
-		return fmt.Errorf("leaderboard not found")
+		return errorx.Wrap(errorx.ErrLeaderboardNotFound, nil)
 	}
 
 	err := s.cache.AddScore(leaderboard.ID, entryID, score)
 	if err != nil {
 		s.logger.Error("[LeaderboardSvc] failed to update entry score", "leaderboard", leaderboardID, "entry", entryID, "error", err)
-		return fmt.Errorf("failed to update entry score: %w", err)
+		return errorx.Wrap(errorx.ErrUpdateScore, err)
 	}
 
 	return nil
@@ -56,13 +56,13 @@ func (s *LeaderBoardSvc) GetLeaderboardDetail(ctx context.Context, leaderboardID
 	leaderboard := s.leaderboardRepo.FindOneById(ctx, leaderboardID)
 	if leaderboard == nil {
 		s.logger.Error("[LeaderboardSvc] leaderboard not found", "id", leaderboardID)
-		return nil, fmt.Errorf("leaderboard not found")
+		return nil, errorx.Wrap(errorx.ErrLeaderboardNotFound, nil)
 	}
 
 	entries, err := s.cache.GetTopN(leaderboard.ID, 100)
 	if err != nil {
 		s.logger.Error("[LeaderboardSvc] failed to get top entries", "leaderboard", leaderboardID, "error", err)
-		return nil, fmt.Errorf("failed to get top entries: %w", err)
+		return nil, errorx.Wrap(errorx.ErrInternal, err)
 	}
 
 	leaderboardDto := &dto.LeaderboardDto{}
@@ -77,7 +77,7 @@ func (s *LeaderBoardSvc) GetEntryRank(ctx context.Context, leaderboardID string,
 	rank, _, err := s.cache.GetRank(leaderboardID, entryID)
 	if err != nil {
 		s.logger.Error("[LeaderboardSvc] failed to get rank for entry", "leaderboard", leaderboardID, "entry", entryID, "error", err)
-		return 0, fmt.Errorf("failed to get entry rank: %w", err)
+		return 0, errorx.Wrap(errorx.ErrInternal, err)
 	}
 	return int(rank), nil
 }
@@ -87,7 +87,7 @@ func (s *LeaderBoardSvc) GetListLeaderboards(ctx context.Context) ([]dto.Leaderb
 	leaderboards, err := s.leaderboardRepo.FindAll(ctx)
 	if err != nil {
 		s.logger.Error("[LeaderboardSvc] failed to get list of leaderboards", "error", err)
-		return nil, fmt.Errorf("failed to get list of leaderboards: %w", err)
+		return nil, errorx.Wrap(errorx.ErrLeaderboardNotFound, err)
 	}
 
 	var resp []dto.LeaderboardDto
@@ -115,7 +115,7 @@ func (s *LeaderBoardSvc) CreateLeaderboard(ctx context.Context, req dto.CreateLe
 	leaderboard, err := s.leaderboardRepo.Create(ctx, &m)
 	if err != nil {
 		s.logger.Error("[LeaderboardSvc] failed to create leaderboard", "name", req.Name, "error", err)
-		return nil, fmt.Errorf("failed to create leaderboard: %w", err)
+		return nil, errorx.Wrap(errorx.ErrCreateLeaderboard, err)
 	}
 	var resp dto.LeaderboardDto
 	resp.FromModel(leaderboard)
@@ -128,7 +128,7 @@ func (s *LeaderBoardSvc) UpdateLeaderboard(ctx context.Context, leaderboardID st
 	existing := s.leaderboardRepo.FindOneById(ctx, leaderboardID)
 	if existing == nil {
 		s.logger.Error("[LeaderboardSvc] leaderboard not found", "id", leaderboardID)
-		return fmt.Errorf("leaderboard not found")
+		return errorx.Wrap(errorx.ErrLeaderboardNotFound, nil)
 	}
 
 	updatedModel, fields := req.ToModel()
@@ -140,7 +140,7 @@ func (s *LeaderBoardSvc) UpdateLeaderboard(ctx context.Context, leaderboardID st
 	err := s.leaderboardRepo.Update(ctx, leaderboardID, *updatedModel, fields...)
 	if err != nil {
 		s.logger.Error("[LeaderboardSvc] failed to update leaderboard", "id", leaderboardID, "error", err)
-		return fmt.Errorf("failed to update leaderboard: %w", err)
+		return errorx.Wrap(errorx.ErrUpdateLeaderboard, err)
 	}
 
 	return nil
