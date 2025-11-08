@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hiamthach108/simplerank/config"
+	"github.com/hiamthach108/simplerank/internal/model"
 	"github.com/hiamthach108/simplerank/pkg/logger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -38,7 +39,10 @@ func NewDbClient(config *config.AppConfig, logger logger.ILogger) (*gorm.DB, err
 	}
 
 	// Auto migrate your models here if needed
-	// e.g., db.AutoMigrate(&YourModel{})
+	if err := autoMigration(db, logger); err != nil {
+		return nil, err
+	}
+
 	logger.Info("Connected to PostgreSQL database successfully")
 	return db, nil
 }
@@ -66,4 +70,17 @@ func getPostgresSQLDialector(connectionName string, host string, port int,
 		host, port, username, password, dbname, sslmode,
 	)
 	return postgres.Open(dsn)
+}
+
+func autoMigration(db *gorm.DB, logger logger.ILogger) error {
+	logger.Info("Starting database auto migration")
+
+	if err := db.AutoMigrate(
+		&model.Leaderboard{},
+	); err != nil {
+		logger.Error("Failed to auto migrate database", "error", err)
+		return err
+	}
+
+	return nil
 }

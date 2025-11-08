@@ -74,7 +74,7 @@ func NewHttpServer(
 
 	// Register leaderboard routes
 	leaderboardHandler := handler.NewLeaderboardHandler(leaderboardSvc, logger)
-	leaderboardHandler.RegisterRoutes(v1)
+	leaderboardHandler.RegisterRoutes(v1.Group("/leaderboards"))
 
 	return &HttpServer{
 		config: *config,

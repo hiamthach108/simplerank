@@ -16,6 +16,9 @@ const (
 	// Leaderboard errors
 	ErrLeaderboardNotFound AppErrCode = 1001
 	ErrInvalidEntry        AppErrCode = 1002
+	ErrCreateLeaderboard   AppErrCode = 1003
+	ErrUpdateLeaderboard   AppErrCode = 1004
+	ErrUpdateScore         AppErrCode = 1005
 )
 
 var errorMsgs = map[AppErrCode]string{
@@ -30,6 +33,9 @@ var errorMsgs = map[AppErrCode]string{
 
 	ErrLeaderboardNotFound: "Leaderboard not found",
 	ErrInvalidEntry:        "Invalid leaderboard entry",
+	ErrCreateLeaderboard:   "Failed to create leaderboard",
+	ErrUpdateLeaderboard:   "Failed to update leaderboard",
+	ErrUpdateScore:         "Failed to update score",
 }
 
 // GetErrorMessage returns a user-friendly error message for a given error code.

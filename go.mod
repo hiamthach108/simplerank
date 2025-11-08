@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/golobby/dotenv v1.3.2
+	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.11.1
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.0

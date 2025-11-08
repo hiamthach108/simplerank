@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/hiamthach108/simplerank/config"
+	"github.com/hiamthach108/simplerank/internal/repository"
 	"github.com/hiamthach108/simplerank/internal/service"
 	"github.com/hiamthach108/simplerank/pkg/cache"
 	"github.com/hiamthach108/simplerank/pkg/database"
@@ -13,12 +14,18 @@ import (
 func main() {
 	app := fx.New(
 		fx.Provide(
+			// Core
 			config.NewAppConfig,
 			logger.NewLogger,
 			cache.NewAppCache,
 			database.NewDbClient,
 			http.NewHttpServer,
+
+			// Services
 			service.NewLeaderBoardSvc,
+
+			// Repositories
+			repository.NewLeaderboardRepository,
 		),
 		fx.Invoke(http.RegisterHooks),
 	)
