@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -46,16 +47,37 @@ func NewAppCache(config *config.AppConfig, logger logger.ILogger) (ICache, error
 
 func (c *appCache) Set(key string, value any, expireTime *time.Duration) error {
 	rKey := c.prefixedKey(key)
-	return c.redisClient.Set(context.Background(), rKey, value, *expireTime).Err()
+
+	// Serialize value to JSON for complex types
+	var data any
+	switch v := value.(type) {
+	case string, int, int64, float64, bool:
+		// Primitive types can be stored directly
+		data = v
+	default:
+		// Serialize complex types to JSON
+		jsonData, err := json.Marshal(value)
+		if err != nil {
+			return fmt.Errorf("failed to marshal value: %w", err)
+		}
+		data = jsonData
+	}
+
+	return c.redisClient.Set(context.Background(), rKey, data, *expireTime).Err()
 }
 
-func (c *appCache) Get(key string) (any, error) {
+func (c *appCache) Get(key string, data any) error {
 	rKey := c.prefixedKey(key)
 	val, err := c.redisClient.Get(context.Background(), rKey).Result()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return val, nil
+
+	if err := json.Unmarshal([]byte(val), data); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *appCache) Delete(key string) error {
