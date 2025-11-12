@@ -23,9 +23,11 @@ func main() {
 
 			// Services
 			service.NewLeaderBoardSvc,
+			service.NewHistorySvc,
 
 			// Repositories
 			repository.NewLeaderboardRepository,
+			repository.NewHistoryRepository,
 		),
 		fx.Invoke(http.RegisterHooks),
 	)

@@ -4,11 +4,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
 type BaseModel struct {
 	ID        string         `gorm:"primaryKey;type:varchar(36)"`
+	Metadata  datatypes.JSON `gorm:"type:jsonb"`
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
