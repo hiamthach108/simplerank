@@ -9,7 +9,7 @@ import (
 
 	"github.com/hiamthach108/simplerank/pkg/logger"
 	"github.com/hiamthach108/simplerank/presentation/http"
-	"github.com/hiamthach108/simplerank/presentation/subscriber"
+	"github.com/hiamthach108/simplerank/presentation/rstream"
 	"go.uber.org/fx"
 )
 
@@ -23,7 +23,7 @@ func main() {
 			database.NewDbClient,
 			database.NewClickHouseDbClient,
 			http.NewHttpServer,
-			subscriber.NewSubscriber,
+			rstream.NewSubscriber,
 
 			// Services
 			service.NewLeaderBoardSvc,
@@ -34,7 +34,7 @@ func main() {
 			repository.NewHistoryRepository,
 		),
 		fx.Invoke(http.RegisterHooks),
-		fx.Invoke(subscriber.RegisterHooks),
+		fx.Invoke(rstream.RegisterHooks),
 	)
 
 	app.Run()
