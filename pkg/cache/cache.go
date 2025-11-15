@@ -1,9 +1,12 @@
 package cache
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hiamthach108/simplerank/config"
@@ -192,19 +195,38 @@ func (c *appCache) GetAroundMember(boardKey, member string, radius int64) ([]Lea
 
 func (c *appCache) Publish(stream string, message any) error {
 	rKey := c.prefixedKey(stream)
+
+	// Encode to binary using gob
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	if err := encoder.Encode(message); err != nil {
+		return fmt.Errorf("failed to encode message: %w", err)
+	}
+
+	// Store as binary data field
 	return c.redisClient.XAdd(context.Background(), &redis.XAddArgs{
 		Stream: rKey,
-		Values: message,
+		Values: map[string]any{
+			"data": buf.Bytes(),
+		},
 	}).Err()
 }
 
-func (c *appCache) EnsureGroup(stream string, group string) error {
+func (c *appCache) EnsureGroup(stream, group string) error {
 	rKey := c.prefixedKey(stream)
 
-	err := c.redisClient.XGroupCreateMkStream(context.Background(), rKey, group, "$").Err()
-	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
+	err := c.redisClient.
+		XGroupCreateMkStream(context.Background(), rKey, group, "$").
+		Err()
+
+	// If group already exists → ignore
+	if err != nil {
+		if strings.Contains(err.Error(), "BUSYGROUP") {
+			return nil
+		}
 		return err
 	}
+
 	return nil
 }
 

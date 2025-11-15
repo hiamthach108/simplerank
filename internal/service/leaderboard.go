@@ -48,6 +48,12 @@ func (s *LeaderBoardSvc) UpdateEntryScore(ctx context.Context, leaderboardID str
 		return errorx.Wrap(errorx.ErrUpdateScore, err)
 	}
 
+	go s.cache.Publish(constants.STREAM_LEADERBOARD_UPDATE, dto.CreateHistoryReq{
+		LeaderboardID: leaderboardID,
+		EntryID:       entryID,
+		Score:         score,
+	})
+
 	return nil
 }
 
