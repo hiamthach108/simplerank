@@ -31,12 +31,15 @@ func NewHistorySvc(logger logger.ILogger, cache cache.ICache, historyRepo reposi
 
 // Record saves a score history record.
 func (s *HistorySvc) Record(ctx context.Context, req *dto.CreateHistoryReq) (*model.History, error) {
-	res, err := s.historyRepo.Create(ctx, req.ToModel())
+	m := req.ToModel()
+
+	err := s.historyRepo.Create(ctx, m)
 	if err != nil {
 		s.logger.Error("[HistorySvc] failed to record score history", "leaderboard", req.LeaderboardID, "entry", req.EntryID, "error", err)
 		return nil, err
 	}
-	return res, nil
+
+	return m, nil
 }
 
 // List retrieves a list of score history records based on the provided request filters.

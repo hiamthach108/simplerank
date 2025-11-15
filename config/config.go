@@ -41,6 +41,15 @@ type AppConfig struct {
 		MaxIdleConns   int    `env:"POSTGRES_MAX_IDLE_CONNS"`
 		MaxOpenConns   int    `env:"POSTGRES_MAX_OPEN_CONNS"`
 	}
+
+	ClickHouse struct {
+		Host     string `env:"CLICKHOUSE_HOST"`
+		Port     int    `env:"CLICKHOUSE_PORT"`
+		HTTPPort int    `env:"CLICKHOUSE_HTTP_PORT"`
+		DB       string `env:"CLICKHOUSE_DB"`
+		User     string `env:"CLICKHOUSE_USER"`
+		Password string `env:"CLICKHOUSE_PASSWORD"`
+	}
 }
 
 func NewAppConfig() (*AppConfig, error) {
