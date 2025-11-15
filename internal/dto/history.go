@@ -38,6 +38,10 @@ func (r *CreateHistoryReq) ToModel() *model.History {
 		LeaderboardID: r.LeaderboardID,
 		EntryID:       r.EntryID,
 		Score:         r.Score,
+		BaseModel: model.BaseModel{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
 	}
 	if r.Metadata != nil {
 		if data, err := json.Marshal(r.Metadata); err == nil {

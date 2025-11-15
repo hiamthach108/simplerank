@@ -186,6 +186,57 @@ func (c *appCache) GetAroundMember(boardKey, member string, radius int64) ([]Lea
 	return entries, nil
 }
 
+// =============================
+// 🔹 Stream Operations
+// =============================
+
+func (c *appCache) Publish(stream string, message any) error {
+	rKey := c.prefixedKey(stream)
+	return c.redisClient.XAdd(context.Background(), &redis.XAddArgs{
+		Stream: rKey,
+		Values: message,
+	}).Err()
+}
+
+func (c *appCache) EnsureGroup(stream string, group string) error {
+	rKey := c.prefixedKey(stream)
+
+	err := c.redisClient.XGroupCreateMkStream(context.Background(), rKey, group, "$").Err()
+	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
+		return err
+	}
+	return nil
+}
+
+func (c *appCache) Subscribe(stream string, group string, handler ConsumerHandler) error {
+	rKey := c.prefixedKey(stream)
+	go func() {
+		for {
+			streams, err := c.redisClient.XReadGroup(context.Background(), &redis.XReadGroupArgs{
+				Group:    group,
+				Consumer: handler.Consumer,
+				Streams:  []string{rKey, ">"},
+				Count:    1,
+				Block:    0,
+			}).Result()
+			if err != nil {
+				c.logger.Error("Failed to read from stream", "stream", stream, "group", group, "error", err)
+				continue
+			}
+
+			for _, strm := range streams {
+				for _, message := range strm.Messages {
+					handler.Handler(message.Values)
+					// Acknowledge message
+					c.redisClient.XAck(context.Background(), rKey, group, message.ID)
+				}
+			}
+		}
+	}()
+
+	return nil
+}
+
 func (c *appCache) prefixedKey(key string) string {
 	return fmt.Sprintf("%s:%s", c.serviceName, key)
 }
