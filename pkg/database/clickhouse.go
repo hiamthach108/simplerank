@@ -20,7 +20,6 @@ func NewClickHouseDbClient(config *config.AppConfig, logger logger.ILogger) (*ch
 		ch.WithCompression(true),
 		ch.WithAutoCreateDatabase(true),
 	)
-	defer db.Close()
 
 	ctx := context.Background()
 	if err := createTables(db, ctx); err != nil {

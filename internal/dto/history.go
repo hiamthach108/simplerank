@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hiamthach108/simplerank/internal/model"
 	"gorm.io/datatypes"
 )
@@ -34,6 +35,8 @@ type CreateHistoryReq struct {
 }
 
 func (r *CreateHistoryReq) ToModel() *model.History {
+	uid, _ := uuid.NewV6()
+
 	m := &model.History{
 		LeaderboardID: r.LeaderboardID,
 		EntryID:       r.EntryID,
@@ -41,6 +44,7 @@ func (r *CreateHistoryReq) ToModel() *model.History {
 		BaseModel: model.BaseModel{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
+			ID:        uid.String(),
 		},
 	}
 	if r.Metadata != nil {

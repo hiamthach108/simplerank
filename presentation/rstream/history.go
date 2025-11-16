@@ -24,30 +24,30 @@ func (s *Subscriber) subscribeToLeaderboardUpdates(ctx context.Context) error {
 		Consumer: constants.STREAM_HISTORY_CONSUMER_GROUP,
 		Handler: func(message any) {
 			// Process leaderboard update message
-			s.logger.Info("Received leaderboard update", "message", message)
+			s.logger.Info("[STREAM] Received leaderboard update", "stream", stream)
 
 			// Decode message using generic helper
 			req, err := decodeMessage[dto.CreateHistoryReq](message)
 			if err != nil {
-				s.logger.Error("Failed to decode message", "error", err)
+				s.logger.Error("[STREAM] Failed to decode message", "error", err)
 				return
 			}
 
 			history, err := s.historySvc.Record(ctx, req)
 			if err != nil {
-				s.logger.Error("Failed to record history", "error", err)
+				s.logger.Error("[STREAM] Failed to record history", "error", err)
 				return
 			}
-			s.logger.Info("Recorded history successfully", "history", history)
+			s.logger.Info("[STREAM] Recorded history successfully", "history", history)
 		},
 	}
 
 	// Subscribe to stream
 	if err := s.cache.Subscribe(stream, group, handler); err != nil {
-		s.logger.Error("Failed to subscribe to stream", "stream", stream, "error", err)
+		s.logger.Error("[STREAM] Failed to subscribe to stream", "stream", stream, "error", err)
 		return err
 	}
 
-	s.logger.Info("Subscribed to stream", "stream", stream, "group", group, "consumer", handler.Consumer)
+	s.logger.Info("[STREAM] Subscribed to stream", "stream", stream, "group", group, "consumer", handler.Consumer)
 	return nil
 }

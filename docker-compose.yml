@@ -98,7 +98,6 @@ services:
     restart: unless-stopped
     environment:
       CLICKHOUSE_DB: simplerank
-      CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: clickhouse
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     ports:
