@@ -10,6 +10,7 @@ import (
 	"github.com/hiamthach108/simplerank/internal/shared/constants"
 	"github.com/hiamthach108/simplerank/pkg/cache"
 	"github.com/hiamthach108/simplerank/pkg/logger"
+	"github.com/hiamthach108/simplerank/presentation/socket"
 )
 
 type ILeaderboardSvc interface {
@@ -25,13 +26,20 @@ type LeaderBoardSvc struct {
 	logger          logger.ILogger
 	cache           cache.ICache
 	leaderboardRepo repository.ILeaderboardRepository
+	broadcaster     socket.IBroadcaster
 }
 
-func NewLeaderBoardSvc(logger logger.ILogger, cache cache.ICache, leaderboardRepo repository.ILeaderboardRepository) ILeaderboardSvc {
+func NewLeaderBoardSvc(
+	logger logger.ILogger,
+	cache cache.ICache,
+	leaderboardRepo repository.ILeaderboardRepository,
+	broadcaster socket.IBroadcaster,
+) ILeaderboardSvc {
 	return &LeaderBoardSvc{
 		logger:          logger,
 		cache:           cache,
 		leaderboardRepo: leaderboardRepo,
+		broadcaster:     broadcaster,
 	}
 }
 
@@ -48,11 +56,7 @@ func (s *LeaderBoardSvc) UpdateEntryScore(ctx context.Context, leaderboardID str
 		return errorx.Wrap(errorx.ErrUpdateScore, err)
 	}
 
-	go s.cache.Publish(constants.STREAM_LEADERBOARD_UPDATE, dto.CreateHistoryReq{
-		LeaderboardID: leaderboardID,
-		EntryID:       entryID,
-		Score:         score,
-	})
+	s.publishEvent(leaderboardID, entryID, score)
 
 	return nil
 }
@@ -179,4 +183,20 @@ func (s *LeaderBoardSvc) getCacheLeaderboard(ctx context.Context, leaderboardID 
 	}
 
 	return leaderboard, nil
+}
+
+func (s *LeaderBoardSvc) publishEvent(leaderboardID string, entryID string, score float64) {
+	// Publish to Redis stream for history tracking
+	go s.cache.Publish(constants.STREAM_LEADERBOARD_UPDATE, dto.CreateHistoryReq{
+		LeaderboardID: leaderboardID,
+		EntryID:       entryID,
+		Score:         score,
+	})
+
+	// Broadcast to WebSocket clients using topic-based system
+	topic := socket.TopicLeaderboard + leaderboardID
+	go s.broadcaster.Broadcast(topic, socket.MessageTypeEntryUpdate, map[string]any{
+		"entryId": entryID,
+		"score":   score,
+	})
 }

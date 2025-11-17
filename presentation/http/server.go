@@ -9,6 +9,7 @@ import (
 	"github.com/hiamthach108/simplerank/internal/service"
 	"github.com/hiamthach108/simplerank/pkg/logger"
 	"github.com/hiamthach108/simplerank/presentation/http/handler"
+	"github.com/hiamthach108/simplerank/presentation/socket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/fx"
@@ -24,6 +25,7 @@ func NewHttpServer(
 	config *config.AppConfig,
 	logger logger.ILogger,
 	leaderboardSvc service.ILeaderboardSvc,
+	wsHub *socket.Hub,
 ) *HttpServer {
 	e := echo.New()
 	e.HideBanner = true
@@ -69,6 +71,9 @@ func NewHttpServer(
 	e.GET("/ping", func(c echo.Context) error {
 		return c.String(http.StatusOK, "pong")
 	})
+
+	// WebSocket endpoint
+	e.GET("/ws", socket.HandleWebSocket(wsHub))
 
 	v1 := e.Group("/api/v1")
 
