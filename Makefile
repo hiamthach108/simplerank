@@ -4,4 +4,15 @@ test:
 run:
 	go run cmd/main.go
 
-.PHONY: test run
+lint:
+	golangci-lint run
+
+lint-fix:
+	golangci-lint run --fix
+
+install-lint:
+	@echo "Installing golangci-lint..."
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.60.0
+	@echo "golangci-lint installed successfully!"
+
+.PHONY: test run lint lint-fix install-lint

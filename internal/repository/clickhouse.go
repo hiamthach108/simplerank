@@ -19,8 +19,7 @@ type IClickHouseRepository[T any] interface {
 }
 
 type ClickHouseRepository[T any] struct {
-	db    *ch.DB
-	model T
+	db *ch.DB
 }
 
 var _ IClickHouseRepository[any] = &ClickHouseRepository[any]{}

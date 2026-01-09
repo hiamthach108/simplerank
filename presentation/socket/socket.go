@@ -288,10 +288,10 @@ func (h *Hub) GetTotalConnections() int {
 func (c *Client) readPump() {
 	defer func() {
 		c.hub.unregister <- c
-		c.conn.Close()
+		_ = c.conn.Close()
 	}()
 
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 
 	for {
 		var msg Message
@@ -312,16 +312,16 @@ func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.conn.Close()
+		_ = c.conn.Close()
 	}()
 
 	for {
 		select {
 		case message, ok := <-c.send:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// Hub closed the channel
-				c.conn.Close()
+				_ = c.conn.Close()
 				return
 			}
 
@@ -330,7 +330,7 @@ func (c *Client) writePump() {
 			}
 
 		case <-ticker.C:
-			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			ping := Message{
 				Type:      MessageTypePing,
 				Timestamp: time.Now(),
@@ -387,7 +387,7 @@ func (c *Client) handleMessage(msg *Message) {
 		}
 
 	case MessageTypePong:
-		c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		_ = c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	}
 }
 
@@ -455,7 +455,7 @@ func RegisterHooks(lc fx.Lifecycle, hub *Hub) {
 			hub.mu.Lock()
 			for _, clients := range hub.clients {
 				for client := range clients {
-					client.conn.Close()
+					_ = client.conn.Close()
 				}
 			}
 			hub.mu.Unlock()

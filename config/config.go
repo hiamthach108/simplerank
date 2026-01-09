@@ -58,7 +58,12 @@ func NewAppConfig() (*AppConfig, error) {
 	// Try to load from .env file first (optional)
 	file, err := os.Open(".env")
 	if err == nil {
-		defer file.Close()
+		defer func() {
+			if closeErr := file.Close(); closeErr != nil {
+				// Log error but don't fail if file close fails
+				_ = closeErr
+			}
+		}()
 		err = dotenv.NewDecoder(file).Decode(config)
 		if err != nil {
 			return config, err

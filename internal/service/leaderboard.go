@@ -187,11 +187,15 @@ func (s *LeaderBoardSvc) getCacheLeaderboard(ctx context.Context, leaderboardID 
 
 func (s *LeaderBoardSvc) publishEvent(leaderboardID string, entryID string, score float64) {
 	// Publish to Redis stream for history tracking
-	go s.cache.Publish(constants.STREAM_LEADERBOARD_UPDATE, dto.CreateHistoryReq{
-		LeaderboardID: leaderboardID,
-		EntryID:       entryID,
-		Score:         score,
-	})
+	go func() {
+		if err := s.cache.Publish(constants.STREAM_LEADERBOARD_UPDATE, dto.CreateHistoryReq{
+			LeaderboardID: leaderboardID,
+			EntryID:       entryID,
+			Score:         score,
+		}); err != nil {
+			s.logger.Error("[LeaderboardSvc] failed to publish event", "error", err)
+		}
+	}()
 
 	// Broadcast to WebSocket clients using topic-based system
 	topic := socket.TopicLeaderboard + leaderboardID

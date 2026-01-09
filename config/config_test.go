@@ -16,31 +16,31 @@ func TestNewAppConfig(t *testing.T) {
 			name: "load from environment variables",
 			setup: func() func() {
 				// Set environment variables
-				os.Setenv("APP_NAME", "test-app")
-				os.Setenv("APP_VERSION", "1.0.0")
-				os.Setenv("HTTP_HOST", "localhost")
-				os.Setenv("HTTP_PORT", "8080")
-				os.Setenv("LOG_LEVEL", "debug")
-				os.Setenv("CACHE_DEFAULT_EXPIRE_TIME_SEC", "3600")
-				os.Setenv("CACHE_CLEANUP_INTERVAL_HOUR", "24")
-				os.Setenv("REDIS_HOST", "localhost")
-				os.Setenv("REDIS_PORT", "6379")
-				os.Setenv("REDIS_PASSWORD", "secret123")
-				os.Setenv("REDIS_DB", "0")
+				_ = os.Setenv("APP_NAME", "test-app")
+				_ = os.Setenv("APP_VERSION", "1.0.0")
+				_ = os.Setenv("HTTP_HOST", "localhost")
+				_ = os.Setenv("HTTP_PORT", "8080")
+				_ = os.Setenv("LOG_LEVEL", "debug")
+				_ = os.Setenv("CACHE_DEFAULT_EXPIRE_TIME_SEC", "3600")
+				_ = os.Setenv("CACHE_CLEANUP_INTERVAL_HOUR", "24")
+				_ = os.Setenv("REDIS_HOST", "localhost")
+				_ = os.Setenv("REDIS_PORT", "6379")
+				_ = os.Setenv("REDIS_PASSWORD", "secret123")
+				_ = os.Setenv("REDIS_DB", "0")
 
 				return func() {
 					// Cleanup
-					os.Unsetenv("APP_NAME")
-					os.Unsetenv("APP_VERSION")
-					os.Unsetenv("HTTP_HOST")
-					os.Unsetenv("HTTP_PORT")
-					os.Unsetenv("LOG_LEVEL")
-					os.Unsetenv("CACHE_DEFAULT_EXPIRE_TIME_SEC")
-					os.Unsetenv("CACHE_CLEANUP_INTERVAL_HOUR")
-					os.Unsetenv("REDIS_HOST")
-					os.Unsetenv("REDIS_PORT")
-					os.Unsetenv("REDIS_PASSWORD")
-					os.Unsetenv("REDIS_DB")
+					_ = os.Unsetenv("APP_NAME")
+					_ = os.Unsetenv("APP_VERSION")
+					_ = os.Unsetenv("HTTP_HOST")
+					_ = os.Unsetenv("HTTP_PORT")
+					_ = os.Unsetenv("LOG_LEVEL")
+					_ = os.Unsetenv("CACHE_DEFAULT_EXPIRE_TIME_SEC")
+					_ = os.Unsetenv("CACHE_CLEANUP_INTERVAL_HOUR")
+					_ = os.Unsetenv("REDIS_HOST")
+					_ = os.Unsetenv("REDIS_PORT")
+					_ = os.Unsetenv("REDIS_PASSWORD")
+					_ = os.Unsetenv("REDIS_DB")
 				}
 			},
 			wantErr: false,
@@ -135,16 +135,16 @@ func TestNewAppConfig(t *testing.T) {
 func TestAppConfigPartialEnv(t *testing.T) {
 	// Test with partial environment variables
 	cleanup := func() {
-		os.Unsetenv("APP_NAME")
-		os.Unsetenv("HTTP_PORT")
-		os.Unsetenv("REDIS_HOST")
+		_ = os.Unsetenv("APP_NAME")
+		_ = os.Unsetenv("HTTP_PORT")
+		_ = os.Unsetenv("REDIS_HOST")
 	}
 	defer cleanup()
 
 	// Only set some environment variables
-	os.Setenv("APP_NAME", "partial-app")
-	os.Setenv("HTTP_PORT", "9000")
-	os.Setenv("REDIS_HOST", "redis-server")
+	_ = os.Setenv("APP_NAME", "partial-app")
+	_ = os.Setenv("HTTP_PORT", "9000")
+	_ = os.Setenv("REDIS_HOST", "redis-server")
 
 	config, err := NewAppConfig()
 	if err != nil {
@@ -181,16 +181,16 @@ func TestAppConfigPartialEnv(t *testing.T) {
 func TestAppConfigInvalidEnvVars(t *testing.T) {
 	// Test with invalid environment variable values
 	cleanup := func() {
-		os.Unsetenv("APP_NAME")
-		os.Unsetenv("HTTP_PORT")
-		os.Unsetenv("CACHE_DEFAULT_EXPIRE_TIME_SEC")
+		_ = os.Unsetenv("APP_NAME")
+		_ = os.Unsetenv("HTTP_PORT")
+		_ = os.Unsetenv("CACHE_DEFAULT_EXPIRE_TIME_SEC")
 	}
 	defer cleanup()
 
 	// Set invalid environment variable values
-	os.Setenv("APP_NAME", "")                                // Empty value
-	os.Setenv("HTTP_PORT", "invalid_port_number")           // Invalid port
-	os.Setenv("CACHE_DEFAULT_EXPIRE_TIME_SEC", "not_a_number") // Invalid integer
+	_ = os.Setenv("APP_NAME", "")                                  // Empty value
+	_ = os.Setenv("HTTP_PORT", "invalid_port_number")              // Invalid port
+	_ = os.Setenv("CACHE_DEFAULT_EXPIRE_TIME_SEC", "not_a_number") // Invalid integer
 
 	config, err := NewAppConfig()
 	if err != nil {
@@ -228,13 +228,13 @@ LOG_LEVEL=warn`
 	// Save current directory
 	origDir, _ := os.Getwd()
 	defer func() {
-		os.Chdir(origDir)
-		os.Remove(".env") // Clean up
+		_ = os.Chdir(origDir)
+		_ = os.Remove(".env") // Clean up
 	}()
 
 	// Create temporary directory and change to it
 	tmpDir := t.TempDir()
-	os.Chdir(tmpDir)
+	_ = os.Chdir(tmpDir)
 
 	err := os.WriteFile(".env", []byte(envContent), 0644)
 	if err != nil {
